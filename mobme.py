@@ -18,6 +18,7 @@ AccExpr = pghelp.PGExpressions(
 
 app = web.Application()
 
+
 async def startup(app: web.Application) -> None:
     app["db"] = pghelp.PGInterface(
         query_strings=AccExpr,
@@ -25,19 +26,32 @@ async def startup(app: web.Application) -> None:
     )
     app["mob"] = StatefulMobster()
 
+
 app.on_startup.append(startup)
 
 
-async def index(request: web.Request) -> web.Response:
+async def create_account(request: web.Request) -> web.Response:
     return web.FileResponse("index.html")
 
 
-async def index_post(request: web.Request) -> web.Response:
+async def create_account_post(request: web.Request) -> web.Response:
     data = await request.post()
     await app["db"].add_user(data["username"], data["email"], data["name"])
-    await app["mob"].ledger_manager.put_pmob_tx(data["username"], int(0.5e12), "airdrop")
+    await app["mob"].ledger_manager.put_pmob_tx(
+        data["username"], int(0.5e12), "airdrop"
+    )
     return "yeah"
     # keep a login cookie
+
+
+async def login(request: web.Request) -> web.Response:
+    pass
+
+
+async def user_donate_page(request: web.Request) -> web.Response:
+    pass
+    # serve pages for mob.me links
+    # donate to user x if they exist and you're loged in
 
 
 async def main(request: web.Request) -> web.Response:
@@ -45,9 +59,13 @@ async def main(request: web.Request) -> web.Response:
     # form for send to a username
     # form for wd to wallet
 
-# serve pages for mob.me links
 
-app.add_routes([web.get("/", index), web.post("/", index_post)])
+async def discover(request: web.Request) -> web.Response:
+    # list people in db with links
+    pass
+
+
+app.add_routes([web.get("/", create_account), web.post("/", create_account_post)])
 
 if __name__ == "__main__":
     web.run_app(app, port=8080, host="0.0.0.0", access_log=None)
